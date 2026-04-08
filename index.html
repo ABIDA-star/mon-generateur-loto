@@ -3,64 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Générateur Loto</title>
+    <title>Générateur Triple Zone</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background-color: #eef2f3; padding-top: 50px; color: #333; }
-        .container { background: white; padding: 40px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: 1px solid #ddd; }
-        h1 { color: #2c3e50; margin-bottom: 30px; }
-        .boule { display: inline-block; width: 50px; height: 50px; line-height: 50px; background: radial-gradient(circle at 15px 15px, #3498db, #2980b9); color: white; border-radius: 50%; margin: 8px; font-weight: bold; font-size: 20px; box-shadow: 2px 4px 6px rgba(0,0,0,0.2); }
-        .etoile { background: radial-gradient(circle at 15px 15px, #f1c40f, #f39c12); color: #2c3e50; }
-        button { padding: 15px 30px; font-size: 18px; cursor: pointer; background-color: #27ae60; color: white; border: none; border-radius: 50px; margin-top: 30px; transition: transform 0.2s, background 0.2s; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3); }
-        button:hover { background-color: #219150; transform: scale(1.05); }
-        button:active { transform: scale(0.95); }
-        #resultat { min-height: 80px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; background-color: #f0f2f5; padding: 20px; color: #333; }
+        .container { background: white; padding: 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 90%; }
+        h1 { color: #2c3e50; font-size: 24px; }
+        .section-titre { font-weight: bold; margin-top: 20px; color: #7f8c8d; text-transform: uppercase; font-size: 14px; }
+        .affichage { min-height: 100px; margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 10px; border: 1px dashed #ccc; }
+        .boule { display: inline-block; width: 40px; height: 40px; line-height: 40px; background: #3498db; color: white; border-radius: 50%; margin: 5px; font-weight: bold; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .etoile { background: #f1c40f; color: #2c3e50; }
+        .btn-group { display: flex; flex-direction: column; gap: 10px; }
+        button { padding: 12px; font-size: 16px; cursor: pointer; border: none; border-radius: 10px; color: white; transition: 0.3s; }
+        .btn-euro { background-color: #2980b9; }
+        .btn-loto { background-color: #27ae60; }
+        .btn-ext { background-color: #8e44ad; }
+        button:hover { opacity: 0.8; transform: translateY(-2px); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🍀 Tirage Euromillions</h1>
-    <div id="resultat">
-        <p>Prêt pour le tirage ?</p>
+    <h1>🍀 Mon Générateur Perso</h1>
+    <p>Tirage équilibré par zones (Bas / Milieu / Haut)</p>
+
+    <div class="btn-group">
+        <button class="btn-euro" onclick="genererTirage('Euro', 50, 5, 2, 12)">🇪🇺 EuroMillions (1-50 + 2 Etoiles)</button>
+        <button class="btn-loto" onclick="genererTirage('Loto', 49, 5, 1, 10)">🇫🇷 Loto (1-49 + 1 Chance)</button>
+        <button class="btn-ext" onclick="genererTirage('Etranger', 90, 5, 1, 10)">🌍 Loto Étranger (1-90 + 1 Chance)</button>
     </div>
-    <button onclick="generer()">Lancer le tirage</button>
+
+    <div class="section-titre" id="jeu-nom">Choisissez un tirage</div>
+    <div class="affichage" id="resultat">---</div>
 </div>
 
 <script>
-    function generer() {
-        // Tirage des 5 numéros (1 à 50)
-        let numeros = [];
-        while(numeros.length < 5) {
-            let n = Math.floor(Math.random() * 50) + 1;
-            if(!numeros.includes(n)) numeros.push(n);
-        }
-        numeros.sort((a, b) => a - b);
+    function genererTirage(nom, maxNum, nbBoules, nbEtoiles, maxEtoile) {
+        document.getElementById('jeu-nom').textContent = "Tirage " + nom;
+        
+        // Calcul des 3 zones
+        let zoneSize = Math.floor(maxNum / 3);
+        let zone1 = [1, zoneSize];
+        let zone2 = [zoneSize + 1, zoneSize * 2];
+        let zone3 = [zoneSize * 2 + 1, maxNum];
 
-        // Tirage des 2 étoiles (1 à 12)
+        let selection = [];
+
+        // On pioche au moins 1 numéro dans chaque zone pour l'équilibre
+        selection.push(randomInt(zone1[0], zone1[1]));
+        selection.push(randomInt(zone2[0], zone2[1]));
+        selection.push(randomInt(zone3[0], zone3[1]));
+
+        // On complète les numéros manquants (ex: 2 de plus pour arriver à 5)
+        while(selection.length < nbBoules) {
+            let n = randomInt(1, maxNum);
+            if(!selection.includes(n)) selection.push(n);
+        }
+        selection.sort((a, b) => a - b);
+
+        // Tirage des étoiles
         let etoiles = [];
-        while(etoiles.length < 2) {
-            let e = Math.floor(Math.random() * 12) + 1;
+        while(etoiles.length < nbEtoiles) {
+            let e = randomInt(1, maxEtoile);
             if(!etoiles.includes(e)) etoiles.push(e);
         }
         etoiles.sort((a, b) => a - b);
 
-        // Affichage des boules
-        let resultatDiv = document.getElementById('resultat');
-        resultatDiv.innerHTML = ""; // On vide le texte précédent
+        // Affichage
+        let html = "";
+        selection.forEach(n => html += `<div class="boule">${n}</div>`);
+        etoiles.forEach(e => html += `<div class="boule etoile">${e}</div>`);
+        document.getElementById('resultat').innerHTML = html;
+    }
 
-        numeros.forEach(num => {
-            let div = document.createElement('div');
-            div.className = 'boule';
-            div.textContent = num;
-            resultatDiv.appendChild(div);
-        });
-
-        etoiles.forEach(et => {
-            let div = document.createElement('div');
-            div.className = 'boule etoile';
-            div.textContent = et;
-            resultatDiv.appendChild(div);
-        });
+    function randomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 </script>
 
